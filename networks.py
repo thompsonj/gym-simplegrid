@@ -2,6 +2,7 @@
 import torch
 from torch import nn
 
+
 class PolicyMLP(nn.Module):
     
     def __init__(self, n_actions, n_states, hidden_size):
@@ -17,12 +18,12 @@ class PolicyMLP(nn.Module):
         self.pi = nn.Softmax(dim = 0)
     
     def forward(self, input):
-
         X = self.fc1(input)
         out = self.fc2(self.fc1_activation(X))
         out = self.fc3(self.fc2_activation(out))
         output = self.pi(out)
         return output
+
 
 class CriticMLP(nn.Module):
 
@@ -38,11 +39,11 @@ class CriticMLP(nn.Module):
         self.fc3 = nn.Linear(self.hidden_size, self.n_outputs)
     
     def forward(self, input):
-
         X = self.fc1(input)
         output = self.fc2(self.fc1_activation(X))
         output = self.fc3(self.fc2_activation(output))
         return output
+
 
 class PolicyRNN(nn.Module):
     
@@ -52,7 +53,7 @@ class PolicyRNN(nn.Module):
         self.n_actions = n_actions
         self.n_inputs = n_inputs
         self.hidden_size = hidden_size
-        # torch.manual_seed(1)
+        torch.manual_seed(1)
         self.initialize_model()
 
     def initialize_model(self):
@@ -71,6 +72,7 @@ class PolicyRNN(nn.Module):
         logits = self.logits(out)
 
         return logits, (lstm_h, lstm_c)
+
 
 class CriticRNN(nn.Module):
     

@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 import gym_simplegrid
 from utils import smooth, Timer
-from networks import PolicyMLP, CriticMLP
+from networks import PolicyMLP, CriticMLP, PolicyRNN, CriticRNN
 
 class MLPAgent:
     """Actor-Critic Agent for A2C."""
@@ -105,11 +105,11 @@ def get_state_rep(observation, state_rep, n_states, ncols, nrows, env, goal_r=No
 def train_A2C(my_desc, my_reward_map, config):
     timer = Timer()
     # %% PARAMETERS
-    n_steps = 8
+    n_steps = config.n_steps  #8
     n_episodes = config.n_episodes
     gamma = 0.99  # discount factor
-    hidden_size = {'actor':128, 'critic':128}
-    learning_rate = {'actor': 1e-4, 'critic': 1e-4}
+    hidden_size = {'actor':64, 'critic':64}
+    learning_rate = {'actor': config.lr, 'critic': config.lr}
     n_states = sum([len(row) for row in my_desc])
     nrows = len(my_desc)
     ncols = len(my_desc[0])
@@ -182,13 +182,6 @@ def train_A2C(my_desc, my_reward_map, config):
     filename = f'learning_curves_{config.task}_{config.state_rep}_h{hsize}_lr{lr}.png'
     plt.savefig(filename)
     
-    
-def meta_trainA2C(my_desc, my_reward_map, config):
-    """ With the above as a starting point fill in this function according to the following specification:
-    
-    """
-    pass
-
 
 if __name__ == '__main__':
     """ Example use from command line:
@@ -199,20 +192,33 @@ if __name__ == '__main__':
     parser.add_argument('--state_rep', type=str, default='row-column', help='state representation. one of rgb, one-hot, row-column')
     parser.add_argument('--render', action='store_true', default=False, help='whether to render environment on each step')
     parser.add_argument('--n_episodes', type=int, default=1000)
+    parser.add_argument('--n_steps', type=int, default=8)
+    parser.add_argument('--lr', type=float, default=1e-4)
     # parser.add_argument('--meta', action='store_true', default=False)
     config, _ = parser.parse_known_args()
-    my_desc = [
-        "WWWWWW",
-        "WSEESW",
-        "WESEEW",
-        "WSEEGW",
-        "WWWWWW"
-    ]
+    if config.task == 'find goal':
+        my_desc = [
+            "WWWWWWW",
+            "WSEEESW",
+            "WEESEEW",
+            "WSEEEGW",
+            "WWWWWWW"
+        ]
+    elif config.task == 'collect':
+        my_desc = [
+            "WWWWWWW",
+            "WSEBBEW",
+            "WEBEBEW",
+            "WEEBEBW",
+            "WWWWWWW"
+        ]
+    # Reward Function
     my_reward_map = {
         b'E': -0.1,
         b'S': -0.1,
-        b'W': -1,
-        b'G': 10.0,
+        b'W': -1.0,
+        b'G': 20.0,
+        b'B': 5,
     }
 
     train_A2C(my_desc, my_reward_map, config)

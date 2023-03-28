@@ -5,8 +5,9 @@ This is a fork of damat-le/gym-simplegrid intended for use as part of a training
 This part of the workshop will involve running and editing code locally on your own laptop. 
 
 ## Create a conda environment
+_Here I assume that everyone is using conda to manage their python environments already._
 
-Initialize a conda environment with pytorch and matplotlib 3.5 installed
+Initialize a conda environment with pytorch and matplotlib 3.5 installed. 
 
 `conda create -n workshop matplotlib=3.5 pytorch -c pytorch`
 
