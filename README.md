@@ -42,7 +42,7 @@ This should bring up a window where you can see the agent moving in the default 
 
 On my laptop this takes 15 seconds to train on 1000 episodes. It should save some learning curves that look something like this:
 
-![]('img/learning_curves_find goal_row-column_h128_lr0.0001.png')
+![](img/learning_curves_find_goal_row-column_h128_lr0.0001.png)
 
 
 
