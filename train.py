@@ -14,9 +14,8 @@ from utils import smooth, Timer
 from networks import PolicyMLP, CriticMLP
 
 class MLPAgent:
-
-    def __init__(self, n_actions, n_states, hidden_size, learning_rate, gamma = 0.99):
-
+    """Actor-Critic Agent for A2C."""
+    def __init__(self, n_actions, n_states, hidden_size, learning_rate, gamma=0.99):
         self.gamma = gamma
         self.n_actions = n_actions
         self.actor= PolicyMLP(n_actions,n_states, hidden_size['actor'])
@@ -26,7 +25,6 @@ class MLPAgent:
         self.history = []
 
     def choose_action(self, observation):
-        
         state = torch.tensor(observation, dtype=torch.float32)
         probs = self.actor(state)
         action_probs = Categorical(probs = probs)
@@ -41,7 +39,7 @@ class MLPAgent:
         self.history = []
 
     def learn(self, done):
-
+        """Apply A2C updates."""
         current_state, current_action,current_reward, next_state = self.history[-1]
         current_state = torch.tensor(current_state, dtype = torch.float32)
         next_state = torch.tensor(next_state, dtype = torch.float32)
@@ -54,18 +52,17 @@ class MLPAgent:
         current_state_value = self.critic(current_state)
         next_state_value = self.critic(next_state)
 
+        # Calculate the losses
         td_error = (current_reward + self.gamma*next_state_value*(1- int(done))) - current_state_value
-        
         log_probs = action_probs.log_prob(current_action)
-
         actor_loss = -td_error * log_probs
         critic_loss = td_error ** 2
-
         loss = actor_loss+critic_loss
+        
+        # Take gradient step
         self.actor_optimizer.zero_grad()
         self.critic_optimizer.zero_grad()
-        loss.backward(retain_graph=True)
-        # loss.backward()
+        loss.backward()
         self.actor_optimizer.step()
         self.critic_optimizer.step()
 
@@ -118,7 +115,8 @@ def train_A2C(my_desc, my_reward_map, config):
     ncols = len(my_desc[0])
     state_size = nrows + ncols
     # How large is the input to the network, depending on the state representation
-    input_size = {'one-hot':n_states, 'row-column':state_size, 'rgb':n_states*48, 'map':n_states, 'agent+goal row-col':state_size*2}
+    input_size = {'one-hot':n_states, 'row-column':state_size, 'rgb':n_states*48, 
+                  'map':n_states, 'agent+goal row-col':state_size*2}
     
     # %% INITIALIZATIONS
     env = gym.make('SimpleGrid-v0', desc=my_desc, reward_map=my_reward_map, task=config.task)
@@ -165,7 +163,8 @@ def train_A2C(my_desc, my_reward_map, config):
         avg_score = np.mean(score_history[-50:])
         print('\n episode ', i, 'score  %.1f' % score, 'avg score %.1f' % avg_score)
     timer.stop_timer()
-        
+    
+    # Plot learning curves
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex='all')
     ep, hist = smooth(score_history)
     ax1.plot(ep, hist)
@@ -182,6 +181,13 @@ def train_A2C(my_desc, my_reward_map, config):
     hsize = hidden_size['actor']
     filename = f'learning_curves_{config.task}_{config.state_rep}_h{hsize}_lr{lr}.png'
     plt.savefig(filename)
+    
+    
+def meta_trainA2C(my_desc, my_reward_map, config):
+    """ With the above as a starting point fill in this function according to the following specification:
+    
+    """
+    pass
 
 
 if __name__ == '__main__':

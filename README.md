@@ -23,6 +23,8 @@ Create a directory where you want save the workshop materials. From within that 
 
 ` git clone git@github.com:thompsonj/gym-simplegrid.git`
 
+(side note, check this [link](https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key/) if you encounter an SSH key error when attempting to clone. Github recently changed their host key.)
+
 Then, install simplegrid
 ```bash
     cd gym-simplegrid
@@ -34,6 +36,13 @@ To make sure everything is setup correctly, run
 
 `python train.py --render`
 
+This should bring up a window where you can see the agent moving in the default environment (a simple room with a goal). However, rendering makes training much slower, so when you want training to complete quickly, simply remove the --render flag.
+
+`python train.py`
+
+On my laptop this takes 15 seconds to train on 1000 episodes. It should save some learning curves that look something like this:
+
+![]('img/learning_curves_find goal_row-column_h128_lr0.0001.png')
 
 
 
