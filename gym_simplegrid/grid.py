@@ -153,6 +153,9 @@ class Goal(WorldObj):
 
     def can_overlap(self):
         return True
+    
+    def can_pickup(self):
+        return False
 
     def render(self, img):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
@@ -164,6 +167,9 @@ class Start(WorldObj):
     def can_overlap(self):
         return True
 
+    def can_pickup(self):
+        return False
+    
     def render(self, img):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
@@ -178,6 +184,9 @@ class Floor(WorldObj):
     def can_overlap(self):
         return True
 
+    def can_pickup(self):
+        return False
+
     def render(self, img):
         # Give the floor a pale color
         color = COLORS[self.color] / 2
@@ -189,6 +198,9 @@ class Lava(WorldObj):
 
     def can_overlap(self):
         return True
+    
+    def can_pickup(self):
+        return False
 
     def render(self, img):
         c = (255, 128, 0)
@@ -211,6 +223,9 @@ class Wall(WorldObj):
 
     def see_behind(self):
         return False
+    
+    def can_pickup(self):
+        return False
 
     def render(self, img):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
@@ -227,6 +242,9 @@ class Door(WorldObj):
 
     def see_behind(self):
         return self.is_open
+    
+    def can_pickup(self):
+        return False
 
     def toggle(self, env, pos):
         # If the player has the right key to open the door

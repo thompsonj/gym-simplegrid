@@ -6,7 +6,7 @@ from typing import Optional
 
 import numpy as np
 
-from gym_simplegrid.grid import SimpleGrid, Wall, Goal, Start
+from gym_simplegrid.grid import SimpleGrid, Wall, Goal, Start, Lava, Ball, Box
 from gym_simplegrid.window import Window
 
 from gym import Env, spaces, utils
@@ -27,10 +27,11 @@ MAPS = {
 }
 
 REWARD_MAP = {
-        b'E': 0.0,
-        b'S': 0.0,
+        b'E': -0.5,
+        b'S': -0.5,
         b'W': -1.0,
-        b'G': 1.0,
+        b'G': 20.0,
+        b'L': -5,
     }
 
 
@@ -114,7 +115,7 @@ class SimpleGridEnv(Env):
 
     metadata = {"render_modes": ["human", "ansi", "rgb_array"], "render_fps": 4}
 
-    def __init__(self, desc: list[str] =None, map_name: str =None, reward_map: dict[bytes, float] =None, p_noise: float =None):
+    def __init__(self, desc: list[str] =None, map_name: str =None, reward_map: dict[bytes, float] =None, task: str='find goal', p_noise: float =None):
         """
         Parameters
         ----------
@@ -136,8 +137,10 @@ class SimpleGridEnv(Env):
             - P(move right)=.1
         """
         self.p_noise = p_noise
-        self.desc = self.__initialise_desc(desc, map_name)
+        self.init_desc = desc
+        self.desc  = self.__initialise_desc(desc, map_name)
         self.nrow, self.ncol = self.desc.shape
+        self.task = task
         
         # Reward
         self.reward_map = self.__initialise_reward_map(reward_map)
@@ -149,15 +152,16 @@ class SimpleGridEnv(Env):
         self.observation_space = spaces.Discrete(self.nS)
         self.action_space = spaces.Discrete(self.nA)
 
+        # Rendering
+        self.window = None
+        self.grid = self.__initialise_grid_from_desc(self.desc)
+        self.fps = 5
+
         # Initialise env dynamics
         self.initial_state = None
         self.initial_state_distrib = self.__get_initial_state_distribution(self.desc)
         self.P = self.__get_env_dynamics()
 
-        # Rendering
-        self.window = None
-        self.grid = self.__initialise_grid_from_desc(self.desc)
-        self.fps = 5
         
     @staticmethod
     def __initialise_desc(desc: list[str], map_name: str) -> np.ndarray:
@@ -219,9 +223,15 @@ class SimpleGridEnv(Env):
                     grid.set(col, row, Goal())
                 elif letter == b'W':
                     grid.set(col, row, Wall(color='black'))
+                elif letter == b'L':
+                    grid.set(col, row, Lava())
+                elif letter == b'B':
+                    grid.set(col, row, Ball(color='purple'))
+                elif letter == b'X':
+                    grid.set(col, row, Box(color='blue'))
                 else:
                     grid.set(col, row, None)
-        return grid
+        return grid      
 
     @staticmethod
     def __initialise_reward_map(reward_map: dict[bytes, float]) -> dict[bytes, float]:
@@ -275,6 +285,7 @@ class SimpleGridEnv(Env):
         - 1: DOWN
         - 2: RIGHT
         - 3: UP
+        - 4: PICKUP
         """
         if a == 0:
             col = max(col - 1, 0)
@@ -284,6 +295,7 @@ class SimpleGridEnv(Env):
             col = min(col + 1, self.ncol - 1)
         elif a == 3:
             row = max(row - 1, 0)
+
         return (row, col)
 
     def __transition(self, row: int, col: int, a: int) -> tuple[int, float, bool]:
@@ -291,12 +303,31 @@ class SimpleGridEnv(Env):
         Compute next state, reward and done when starting at (row, col)
         and taking the action action a.
         """
+        
         newrow, newcol = self.__to_next_xy(row, col, a)
-        newstate = self.__to_s(newrow, newcol)
         newletter = self.desc[newrow, newcol]
-        done = bytes(newletter) in b"GW"
+        if bytes(newletter) == b"W":
+            # Can't go into a wall, stay where you are
+            newstate = self.__to_s(row, col)
+        else:
+            newstate = self.__to_s(newrow, newcol)
+        foundall = (b'B' not in self.desc.flatten() and b'X' not in self.desc.flatten())
+        # task = 'find goal'
+        # task = 'collect'
+        if self.task == 'find goal':
+            # done = bytes(newletter) in b"GW"
+            done = bytes(newletter) == b"G"
+        else:
+            done = foundall #or bytes(newletter) in b"GW"
         reward = self.reward_map[newletter]
         return newstate, reward, done
+    
+    def __pickup(self, row, col):
+        if self.grid.get(col, row).can_pickup():
+            self.grid.set(col, row, None)
+            self.desc[row, col] = "E"
+            self.P = self.__get_env_dynamics()
+
 
     def __get_env_dynamics(self):
         """
@@ -319,24 +350,31 @@ class SimpleGridEnv(Env):
                 for a in range(nA):
                     li = P[s][a]
                     letter = self.desc[row, col]
-                    if letter in b"GW":
-                        li.append((1.0, s, 0, True)) #@NOTE: is reward=0 correct? Probably the value doesn't matter.
+                    # if letter in b"GW":
+                    #     li.append((1.0, s, 0, True)) #@NOTE: is reward=0 correct? Probably the value doesn't matter.
+                    # else:
+                    if self.p_noise:
+                        li.append( (1-self.p_noise, *self.__transition(row, col, a)) )
+                        for b in (a_ for a_ in range(nA) if a_ != a):
+                            li.append((self.p_noise / (nA - 1), *self.__transition(row, col, b)))
                     else:
-                        if self.p_noise:
-                            li.append( (1-self.p_noise, *self.__transition(row, col, a)) )
-                            for b in (a_ for a_ in range(nA) if a_ != a):
-                                li.append((self.p_noise / (nA - 1), *self.__transition(row, col, b)))
-                        else:
-                            li.append((1.0, *self.__transition(row, col, a)))
+                        li.append((1.0, *self.__transition(row, col, a)))
         return P
 
     def step(self, a):
         transitions = self.P[self.s][a]
         i = categorical_sample([t[0] for t in transitions], self.np_random)
-        p, s, r, d = transitions[i]
-        self.s = s
+        p, state, r, d = transitions[i]
+        col, row = (state % self.ncol, state // self.ncol)
+        grid_obj = self.grid.get(col, row)
+        if grid_obj is not None and grid_obj.can_pickup():
+            self.__pickup(row, col)
+            foundall = (b'B' not in self.desc.flatten() and b'X' not in self.desc)
+            if foundall: d = True 
+
+        self.s = state
         self.lastaction = a
-        return (int(s), r, d, {"prob": p})
+        return (int(state), r, d, {"prob": p})
 
     def reset(
         self,
@@ -346,6 +384,13 @@ class SimpleGridEnv(Env):
         options: Optional[dict] = None,
     ):
         super().reset(seed=seed)
+        # Reset the grid, put back what you picked up
+        self.desc = self.__initialise_desc(self.init_desc, None)
+        self.grid = self.__initialise_grid_from_desc(self.desc)
+        if self.task == 'collect':
+            # Need to reset dynamics after having picked up items last episode
+            self.P = self.__get_env_dynamics()
+
         # sample initial state from the initial state distribution
         self.s = categorical_sample(self.initial_state_distrib, self.np_random)
         # set the starting red tile on the grid to render
@@ -392,7 +437,8 @@ class SimpleGridEnv(Env):
         Render the environment to an rgb array.
         """
         img = self.grid.render(
-            tile_size=32,
+            # tile_size=32,
+            tile_size=4,
             agent_pos=(self.s % self.ncol, self.s // self.ncol),
             agent_dir=0
         )
