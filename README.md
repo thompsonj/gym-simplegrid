@@ -1,3 +1,44 @@
+# Simple Gridworld Environment, Model Definitions and Training Scripts
+This is a fork of damat-le/gym-simplegrid intended for use as part of a training workshop on deep (meta) reinforcement learning. 
+
+# Setup instructions
+This part of the workshop will involve running and editing code locally on your own laptop. 
+
+## Create a conda environment
+
+Initialize a conda environment with pytorch and matplotlib 3.5 installed
+
+`conda create -n workshop matplotlib=3.5 pytorch -c pytorch`
+
+Activate your new environment
+
+`conda activate workshop`
+
+Install openAI gym 0.23 and pygame. 
+
+`pip install gym==0.23 pygame`
+
+## Clone workshop materials and install gym-simplegrid
+Create a directory where you want save the workshop materials. From within that directory, clone this github repository.
+
+` git clone git@github.com:thompsonj/gym-simplegrid.git`
+
+Then, install simplegrid
+```bash
+    cd gym-simplegrid
+    pip install -e .
+```
+
+## Test
+To make sure everything is setup correctly, run
+
+`python train.py --render`
+
+
+
+
+The original README follows below:
+
 # Simple Gridworld Environment for OpenAI Gym
 
 SimpleGrid is a super simple gridworld environment for OpenAI gym. It is easy to use and customise and it is intended to offer an environment for quick testing and prototyping different RL algorithms.
