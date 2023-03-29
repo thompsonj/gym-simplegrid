@@ -5,7 +5,7 @@ This is a fork of damat-le/gym-simplegrid intended for use as part of a training
 This part of the workshop will involve running and editing code locally on your own laptop. 
 
 ## Create a conda environment
-_Here I assume that everyone is using conda to manage their python environments already._
+(_If you don't already have [Anaconda](https://docs.anaconda.com/anaconda/install/index.html) or [miniconda](https://docs.conda.io/en/latest/miniconda.html) installed, do that first. You may need to restart your computer before you can use conda from the command line._)
 
 Initialize a conda environment with pytorch and matplotlib 3.5 installed. 
 
@@ -45,10 +45,17 @@ On my laptop this takes 15 seconds to train on 1000 episodes. It should save som
 
 ![](img/learning_curves_find_goal_row-column_h128_lr0.0001.png)
 
+# Exercises
+Once you have your conda environment setup and everything installed, checkout the exercises in [exercises.md](exercises.md)
 
+
+
+
+___
+___
+___
 
 The original README follows below:
-
 # Simple Gridworld Environment for OpenAI Gym
 
 SimpleGrid is a super simple gridworld environment for OpenAI gym. It is easy to use and customise and it is intended to offer an environment for quick testing and prototyping different RL algorithms.

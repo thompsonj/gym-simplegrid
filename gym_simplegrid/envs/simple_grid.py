@@ -154,7 +154,7 @@ class SimpleGridEnv(Env):
 
         # Rendering
         self.window = None
-        self.grid = self.__initialise_grid_from_desc(self.desc)
+        self.grid, self.goal_loc = self.__initialise_grid_from_desc(self.desc)
         self.fps = 5
 
         # Initialise env dynamics
@@ -216,11 +216,13 @@ class SimpleGridEnv(Env):
         """
         nrow, ncol = desc.shape
         grid = SimpleGrid(width=ncol, height=nrow)
+        goal_location = (None, None)
         for row in range(nrow):
             for col in range(ncol):
                 letter = desc[row, col]
                 if letter == b'G':
                     grid.set(col, row, Goal())
+                    goal_location = (row, col)
                 elif letter == b'W':
                     grid.set(col, row, Wall(color='black'))
                 elif letter == b'L':
@@ -231,7 +233,7 @@ class SimpleGridEnv(Env):
                     grid.set(col, row, Box(color='blue'))
                 else:
                     grid.set(col, row, None)
-        return grid      
+        return grid, goal_location      
 
     @staticmethod
     def __initialise_reward_map(reward_map: dict[bytes, float]) -> dict[bytes, float]:
@@ -386,7 +388,7 @@ class SimpleGridEnv(Env):
         super().reset(seed=seed)
         # Reset the grid, put back what you picked up
         self.desc = self.__initialise_desc(self.init_desc, None)
-        self.grid = self.__initialise_grid_from_desc(self.desc)
+        self.grid, self.goal_loc = self.__initialise_grid_from_desc(self.desc)
         if self.task == 'collect':
             # Need to reset dynamics after having picked up items last episode
             self.P = self.__get_env_dynamics()

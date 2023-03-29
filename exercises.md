@@ -1,3 +1,5 @@
+If you haven't already followed the setup instructions in the [README](README.md), do that first.
+
 # Gridworld/Metalearning Exercises
 When you run `train.py`, it initalizes a very simple grid world environment consisting of a single walled room containing a goal. The class `MLPAgent` is very similar to the agent you worked with this morning. It's `learn ` method implements A2C. This agent is trained to find the goal while avoiding the walls and in as few steps as possible. If the agent chooses an action that would take it into a wall, it will stay in the current location (and incur the cost of hitting a wall). The episode ends when the agent reaches the goal or when the maximum number of steps has been reached (default:8).
 
@@ -34,7 +36,9 @@ python train.py --task=collect --n_steps=16 --n_episodes=3000 --arch=lstm
 ### Exercise 3.1
 Modeled after the class `train_A2C`, write a class `meta_train_A2C` which implements a meta-learning version of the find the goal task according to the following specifications. The solution you will be guided towards is in the style of the paper RL2: Fast Reinforcement Learning via Slow Reinforcement Learning by Yan Duan, John Schulman, Xi Chen, Peter L. Bartlett, Ilya Sutskever, Pieter Abbeel. You will need your newly written `RNNAgent` for this.
 
-I've provided you with a function which generates a distribution of find the goal MDPs. These environments share a common structure. They consist of a single room with a fixed starting location and a single goal location, but the goal location varies from environment to environment. We are going to learn to learn to find the goal. 
+![](img/image.png)
+
+I've provided you with a function which generates a distribution of find the goal MDPs. These environments share a common structure. They consist of a single room with a fixed starting location and a single goal location, but the goal location varies from environment to environment. We are going to learn to learn to find the goal. To make the task as easy as possible for the purpose of this workshop, the grid is only 5x5.
 
 1. Sample a new MDP every 5 episodes
 2. Instead of restting the agent's hidden state after every episode, now you'll reset the hidden state after each 'block' of 5 episodes of interaction with a common. (`agent.reset()`)
@@ -43,12 +47,22 @@ I've provided you with a function which generates a distribution of find the goa
 
 Now if you run 
 ```bash
-python train.py --n_episodes=3000 --meta
+python train.py --meta --n_episodes=8000 --arch=lstm
 ```
 You should find that the agent eventually learns to find the goal quickly in any of the provided MDPs.
 
-### Exercise 3.2
+### Exercise 3.2 (Bonus)
 Reserve one (or more) environments to test generalization. If the model has meta-learned well, its recurrent dynamics over the course of 5 episodes of interaction with this held out environment should be able to discover the goal location (without any weight updates).
+
+### Exercise 3.3 (Bonus)
+Write a function to generate a distribution of environments for the collect task. Include some latent structure to be learned, for example, you could make all balls fall on a line within the grid. This would be similar to the 'abstractions' in the 'Disentangling Abstraction from Statistical Pattern Matching in Human and Machine Learning' paper we covered in journal club a few weeks back with the battleship task. Use this function to metalearn the collect task.
+
+### Exercise 3.4 (Bonus)
+Our MLPAgent can also learn to find the goal for each environment in our distribution of MDPs if we also provide the location of the goal in the state representation. If you implement this, there is no need to wait 5 episodes to sample a new environment since the mlp has no memory. Simply sample a new environment every episode.
+```bash
+python train.py --meta --n_episodes=8000 --arch=mlp --state_rep='agent+goal row-col' 
+```
+Is this metalearning?
 
 <!-- ### Exercise 3.3
 Plot  -->

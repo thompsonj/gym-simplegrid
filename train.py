@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+from itertools import product
 import gym
 import torch
 import torch.nn as nn
@@ -10,7 +11,7 @@ from gym import spaces
 import matplotlib.pyplot as plt
 
 import gym_simplegrid
-from utils import smooth, Timer
+from utils import smooth, Timer, make_torch_float32
 from networks import PolicyMLP, CriticMLP, PolicyRNN, CriticRNN
 
 class MLPAgent:
@@ -25,7 +26,7 @@ class MLPAgent:
         self.history = []
 
     def choose_action(self, observation):
-        state = torch.tensor(observation, dtype=torch.float32)
+        state = make_torch_float32(observation)
         probs = self.actor(state)
         action_probs = Categorical(probs = probs)
         action = action_probs.sample()
@@ -41,10 +42,10 @@ class MLPAgent:
     def learn(self, done):
         """Apply A2C updates."""
         current_state, current_action,current_reward, next_state = self.history[-1]
-        current_state = torch.tensor(current_state, dtype = torch.float32)
-        next_state = torch.tensor(next_state, dtype = torch.float32)
-        current_reward = torch.tensor(current_reward, dtype = torch.float32)
-        current_action = torch.tensor(current_action, dtype = torch.float32)
+        current_state = make_torch_float32(current_state)
+        next_state = make_torch_float32(next_state)
+        current_reward = make_torch_float32(current_reward)
+        current_action = make_torch_float32(current_action)
         
         actor_output = self.actor(current_state)
         action_probs = Categorical(probs = actor_output)
@@ -102,6 +103,35 @@ def get_state_rep(observation, state_rep, n_states, ncols, nrows, env, goal_r=No
     return observation
 
 
+def get_env_dist(my_reward_map, task):
+    """Returns a list of gym-simplegrid environments."""
+    base_desc = [
+            "WWWWW",
+            "WEEEW",
+            "WEEEW",
+            "WEEEW",
+            "WWWWW"]
+    nrows = len(base_desc)
+    ncols = len(base_desc[0])
+    
+    # grid_list = [['E' for col in range(ncols) for row in range(nrows)]]
+    candidate_goal_locs = [(row, col)  for row, col in product(range(1, nrows-1), range(1, ncols-1))]
+    
+    # fix start location
+    start_row, start_col = (1, 1)
+    candidate_goal_locs.remove((start_row, start_col))
+    
+    MDPs = []
+    for row, col in candidate_goal_locs:
+        temp = [list(string) for string in base_desc]
+        temp[start_row][start_col] = 'S'
+        temp[row][col] = 'G'
+        grid = [''.join(lst) for lst in temp]
+        env = gym.make('SimpleGrid-v0', desc=grid, reward_map=my_reward_map, task=task)
+        MDPs.append(env)
+    return MDPs
+
+
 def train_A2C(my_desc, my_reward_map, config):
     timer = Timer()
     # %% PARAMETERS
@@ -120,7 +150,8 @@ def train_A2C(my_desc, my_reward_map, config):
     
     # %% INITIALIZATIONS
     env = gym.make('SimpleGrid-v0', desc=my_desc, reward_map=my_reward_map, task=config.task)
-    agent = MLPAgent(n_actions=env.action_space.n, n_states=input_size[config.state_rep], hidden_size=hidden_size, learning_rate=learning_rate, gamma=gamma)
+    in_size = input_size[config.state_rep]
+    agent = MLPAgent(n_actions=env.action_space.n, n_states=in_size, hidden_size=hidden_size, learning_rate=learning_rate, gamma=gamma)
     score_history = []
     actor_losses = []
     critic_losses = []
