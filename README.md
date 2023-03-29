@@ -1,5 +1,5 @@
 # Simple Gridworld Environment, Model Definitions and Training Scripts
-This is a fork of damat-le/gym-simplegrid intended for use as part of a training workshop on deep (meta) reinforcement learning. 
+This is a fork of damat-le/gym-simplegrid which I've modified for use as part of a training workshop on deep (meta) reinforcement learning. 
 
 # Setup instructions
 This part of the workshop will involve running and editing code locally on your own laptop. 
@@ -22,9 +22,12 @@ Install openAI gym 0.23 and pygame.
 ## Clone workshop materials and install gym-simplegrid
 Create a directory where you want save the workshop materials. From within that directory, clone this github repository.
 
+`git clone https://github.com/thompsonj/gym-simplegrid.git`
+
+<!-- If you have a github account and have configured your SSH/GPG keys, you can do it this way instead.
 ` git clone git@github.com:thompsonj/gym-simplegrid.git`
 
-(side note, check this [link](https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key/) if you encounter an SSH key error when attempting to clone. Github recently changed their host key.)
+(side note, check this [link](https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key/) if you encounter an SSH key error when attempting to clone. Github recently changed their host key.) -->
 
 Then, install simplegrid
 ```bash
