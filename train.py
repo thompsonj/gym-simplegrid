@@ -140,7 +140,7 @@ def train_A2C(my_desc, my_reward_map, config):
     n_steps = config.n_steps  #8
     n_episodes = config.n_episodes
     gamma = 0.99  # discount factor
-    hidden_size = {'actor':64, 'critic':64}
+    hidden_size = {'actor':32, 'critic':32}
     learning_rate = {'actor': config.lr, 'critic': config.lr}
     n_states = sum([len(row) for row in my_desc])
     nrows = len(my_desc)
