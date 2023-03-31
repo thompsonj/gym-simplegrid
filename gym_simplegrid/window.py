@@ -59,7 +59,8 @@ class Window:
         self.fig.canvas.flush_events()
 
         # Let matplotlib process UI events
-        plt.pause(1/fps)
+        # plt.pause(1/fps)
+        plt.pause((1/fps)/2)
 
     def set_caption(self, text):
         """

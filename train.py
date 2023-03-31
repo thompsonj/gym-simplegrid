@@ -70,6 +70,8 @@ class MLPAgent:
         return actor_loss.item(), critic_loss.item(), next_state_value.item()
 
 
+
+
 def get_state_rep(observation, state_rep, n_states, ncols, nrows, env, goal_r=None, goal_c=None):
     """Prepare state representation to be passed on as input to actor-critic agent."""
     if state_rep == 'one-hot':
@@ -156,8 +158,8 @@ def train_A2C(my_desc, my_reward_map, config):
     actor_losses = []
     critic_losses = []
     action_map = {0: 'LEFT ', 1: 'DOWN ', 2: 'RIGHT', 3: "UP   "}
-    agent.reset()
     for i in range(n_episodes):
+        agent.reset()
         done = False
         score = 0
         observation = env.reset()
@@ -167,7 +169,7 @@ def train_A2C(my_desc, my_reward_map, config):
         step_count = 0
         while not done:
             action = agent.choose_action(observation)
-            if config.render:
+            if config.render and not i%50:
                 env.render(mode="human")
             next_observation, reward, done, info = env.step(action)
             done = done or (step_count >= n_steps)
@@ -182,8 +184,9 @@ def train_A2C(my_desc, my_reward_map, config):
             mean_critic_loss_in_episode += critic_loss
             step_count += 1
             
-        if config.render:
+        if config.render and not i%50:
             env.render(mode="human")
+            plt.close()
         
         mean_actor_loss_in_episode = mean_actor_loss_in_episode / step_count
         mean_critic_loss_in_episode = mean_critic_loss_in_episode / step_count
